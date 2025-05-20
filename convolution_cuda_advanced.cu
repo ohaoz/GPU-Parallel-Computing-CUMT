@@ -95,8 +95,8 @@ __global__ void convolutionKernelSharedAdvanced(float* output,
     // 每个线程负责加载一个或多个元素
     for (int i = ty; i < sharedHeight; i += blockDim.y) {
         for (int j = tx; j < sharedWidth; j += blockDim.x) {
-            int loadRow = blockStartRow + i - (kernelRows / 2);
-            int loadCol = blockStartCol + j - (kernelCols / 2);
+            int loadRow = blockStartRow + i;
+            int loadCol = blockStartCol + j;
             
             // 边界检查
             if (loadRow >= 0 && loadRow < inputRows && loadCol >= 0 && loadCol < inputCols) {

@@ -41,7 +41,7 @@ typedef texture<float, 2, hipTextureReadMode::hipReadModeElementType> floatTextu
 static floatTexture tex_input;
 
 // 基本版本的卷积核函数（使用常量内存存储卷积核）
-__global__ void convolutionKernelConstant(float* output, 
+__global__ void convolutionKernelConstant(hipTextureObject_t texInputObj, float* output, 
                                           int inputRows, int inputCols, 
                                           int kernelRows, int kernelCols,
                                           int outputRows, int outputCols) {
@@ -59,7 +59,7 @@ __global__ void convolutionKernelConstant(float* output,
                 int inputRow = row + ki;
                 int inputCol = col + kj;
                 // 从纹理内存读取输入数据，从常量内存读取卷积核
-                float inputValue = tex2D(tex_input, static_cast<float>(inputCol), static_cast<float>(inputRow));
+                float inputValue = tex2D<float>(texInputObj, static_cast<float>(inputCol), static_cast<float>(inputRow));
                 sum += inputValue * const_kernel[ki * kernelCols + kj];
             }
         }
@@ -70,7 +70,7 @@ __global__ void convolutionKernelConstant(float* output,
 }
 
 // 使用共享内存存储输入数据块的高级卷积核函数
-__global__ void convolutionKernelSharedAdvanced(float* output, 
+__global__ void convolutionKernelSharedAdvanced(hipTextureObject_t texInputObj, float* output, 
                                                 int inputRows, int inputCols, 
                                                 int kernelRows, int kernelCols,
                                                 int outputRows, int outputCols) {
@@ -97,13 +97,13 @@ __global__ void convolutionKernelSharedAdvanced(float* output,
     // 每个线程负责加载一个或多个元素
     for (int i = ty; i < sharedHeight; i += blockDim.y) {
         for (int j = tx; j < sharedWidth; j += blockDim.x) {
-            int loadRow = blockStartRow + i - (kernelRows / 2);
-            int loadCol = blockStartCol + j - (kernelCols / 2);
+            int loadRow = blockStartRow + i;
+            int loadCol = blockStartCol + j;
             
             // 边界检查
             if (loadRow >= 0 && loadRow < inputRows && loadCol >= 0 && loadCol < inputCols) {
                 // 使用纹理内存读取输入数据
-                sharedInput[i * sharedWidth + j] = tex2D(tex_input, static_cast<float>(loadCol), static_cast<float>(loadRow));
+                sharedInput[i * sharedWidth + j] = tex2D<float>(texInputObj, static_cast<float>(loadCol), static_cast<float>(loadRow));
             } else {
                 sharedInput[i * sharedWidth + j] = 0.0f;
             }
@@ -271,7 +271,8 @@ void convolve_hip_advanced(float* h_input, float* h_kernel, float* h_output,
             gridSize,
             blockSize,
             sharedMemSize,
-            0,
+            0, // stream
+            texObj, // Added: hipTextureObject_t
             d_output,
             inputRows, inputCols,
             kernelRows, kernelCols,
@@ -283,8 +284,9 @@ void convolve_hip_advanced(float* h_input, float* h_kernel, float* h_output,
             convolutionKernelConstant,
             gridSize,
             blockSize,
-            0,
-            0,
+            0, // sharedMemSize
+            0, // stream
+            texObj, // Added: hipTextureObject_t
             d_output,
             inputRows, inputCols,
             kernelRows, kernelCols,
