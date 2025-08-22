@@ -87,7 +87,11 @@ float* create_matrix(int rows, int cols) {
 }
 
 void rand_init(float* data, int size, float min_val=0.0f, float max_val=1.0f) {
-    srand(time(NULL));
+    static int seeded = 0;
+    if (!seeded) {
+        srand(time(NULL));
+        seeded = 1;
+    }
     for (int i = 0; i < size; ++i) {
         data[i] = min_val + (max_val - min_val) * (rand() / (float)RAND_MAX);
     }
