@@ -114,8 +114,12 @@ float* allocate_matrix_gpu(int rows, int cols) {
 
 // 创建随机矩阵
 void create_random_matrix(float* matrix, int rows, int cols, float min_val, float max_val) {
-    // 初始化随机数生成器
-    srand((unsigned int)time(NULL));
+    // 初始化随机数生成器(仅初始化一次，避免快速重复调用导致相同序列)
+    static int seeded = 0;
+    if (!seeded) {
+        srand((unsigned int)time(NULL));
+        seeded = 1;
+    }
     
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {

@@ -71,9 +71,13 @@ void free_matrix(float** matrix, int rows) {
  */
 float** create_random_matrix(int rows, int cols, float min_val, float max_val) {
     float** matrix = allocate_matrix(rows, cols);
-    
-    // 初始化随机数生成器
-    srand((unsigned int)time(NULL));
+
+    // 初始化随机数生成器(只初始化一次，避免短时间内重复调用导致相同序列)
+    static int seeded = 0;
+    if (!seeded) {
+        srand((unsigned int)time(NULL));
+        seeded = 1;
+    }
     
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {

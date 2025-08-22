@@ -221,9 +221,13 @@ std::vector<std::vector<float>> detect_edges(const std::vector<std::vector<float
  */
 std::vector<std::vector<float>> generate_random_matrix(int rows, int cols, float min_val = 0.0f, float max_val = 1.0f) {
     std::vector<std::vector<float>> matrix(rows, std::vector<float>(cols));
-    
-    // 设置随机数生成器
-    srand(static_cast<unsigned int>(time(nullptr)));
+
+    // 设置随机数生成器(只初始化一次，避免快速重复调用产生相同序列)
+    static bool seeded = false;
+    if (!seeded) {
+        srand(static_cast<unsigned int>(time(nullptr)));
+        seeded = true;
+    }
     
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
