@@ -25,6 +25,10 @@
 #include <chrono>
 #include <iomanip>
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <limits>
 
 // 定义卷积计算函数的类型别名，增强代码可读性
 using ConvolutionFunction = std::function<void(
